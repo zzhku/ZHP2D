@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZHP2D · 资源导航</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-card: rgba(255,255,255,.04);
+    --border: rgba(255,255,255,.08);
+    --cyan: #22e6ff;
+    --green: #78dc52;
+    --violet: #b48cff;
+    --text: #e6edf3;
+    --text-dim: #8b97a7;
+    --text-fade: #5a6678;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, 'Microsoft YaHei', monospace;
+    background: radial-gradient(1200px 600px at 50% -10%, rgba(34,230,255,.06), transparent 60%), var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 20px 40px;
+  }
+  .header { text-align: center; margin-bottom: 44px; }
+  .header .badge {
+    display: inline-block;
+    font-size: 11px; letter-spacing: .15em;
+    color: var(--cyan);
+    border: 1px solid rgba(34,230,255,.3);
+    background: rgba(34,230,255,.06);
+    border-radius: 20px;
+    padding: 4px 14px;
+    margin-bottom: 18px;
+  }
+  .header h1 { font-size: 30px; font-weight: 600; letter-spacing: .04em; }
+  .header h1 .accent { color: var(--cyan); }
+  .header .sub { color: var(--text-dim); font-size: 13px; margin-top: 10px; letter-spacing: .03em; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 920px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: border-color .2s, transform .2s, background .2s, box-shadow .2s;
+  }
+  .card:hover {
+    border-color: var(--cyan);
+    background: rgba(34,230,255,.06);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .card .icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    background: rgba(34,230,255,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cyan);
+    flex-shrink: 0;
+  }
+  .card .icon svg { width: 22px; height: 22px; }
+  .card .body { flex: 1; min-width: 0; }
+  .card .name { font-size: 15px; font-weight: 600; margin-bottom: 5px; letter-spacing: .02em; }
+  .card .desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+  .card .ext { color: var(--text-fade); flex-shrink: 0; transition: color .2s; }
+  .card:hover .ext { color: var(--cyan); }
+  .footer { margin-top: 52px; color: var(--text-fade); font-size: 11px; letter-spacing: .05em; }
+  .footer a { color: var(--text-dim); text-decoration: none; }
+  .footer a:hover { color: var(--cyan); }
+  .empty { color: var(--text-fade); font-size: 13px; text-align: center; padding: 40px; }
+
+  /* particle background canvas */
+  #particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .header, .grid, .footer { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+  <div class="header">
+    <div class="badge">ZHP2D MULTI LINK</div>
+    <h1>ZHP2D <span class="accent">·</span> 资源导航</h1>
+    <div class="sub">ZHP2D 相关文档与工具入口聚合</div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="footer">ZHP2D · <a href="https://github.com" target="_blank" rel="noopener">Multi Link Hub</a></div>
+
+<script>
+/* 聚合链接表 —— 新增项在此追加即可,无需改其它代码。
+ * 字段: name(必填) / url(必填) / desc(可选) / icon(可选: book|link|doc|tool) */
+const LINKS = [
+  {
+    name: '操作说明',
+    desc: '飞书 Wiki · 设备操作与使用说明文档',
+    url:  'https://wcn8smzkwzo6.feishu.cn/wiki/QZeaw1Y9fitEvtkvxyEcgdxlnId',
+    icon: 'book'
+  }
+];
+
+const ICONS = {
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  doc:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>',
+  tool: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4l-2.6 2.6-2-2z"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+};
+const EXT_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>';
+
+const grid = document.getElementById('grid');
+if (!LINKS.length) {
+  grid.innerHTML = '<div class="empty">暂无链接</div>';
+} else {
+  LINKS.forEach(l => {
+    const a = document.createElement('a');
+    a.className = 'card';
+    a.href = l.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.innerHTML =
+      '<div class="icon">' + (ICONS[l.icon] || ICONS.link) + '</div>' +
+      '<div class="body">' +
+        '<div class="name">' + l.name + '</div>' +
+        (l.desc ? '<div class="desc">' + l.desc + '</div>' : '') +
+      '</div>' +
+      '<div class="ext">' + EXT_ICON + '</div>';
+    grid.appendChild(a);
+  });
+}
+</script>
+
+<script>
+/* 粒子背景 —— 星座网络效果:粒子缓慢漂移,近邻连线,鼠标轻排斥。
+ * 自适应屏幕尺寸,尊重 prefers-reduced-motion,标签页隐藏时暂停。 */
+(function () {
+  const canvas = document.getElementById('particles');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const LINK_DIST = 130;
+  let W = 0, H = 0, dpr = 1, particles = [], raf = null;
+  const mouse = { x: -9999, y: -9999 };
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth;
+    H = canvas.clientHeight;
+    canvas.width = Math.max(1, Math.floor(W * dpr));
+    canvas.height = Math.max(1, Math.floor(H * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function init() {
+    resize();
+    const count = Math.min(110, Math.max(36, Math.floor(W * H / 14000)));
+    particles = [];
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        r: Math.random() * 1.6 + 0.6,
+        c: Math.random() < 0.55 ? '34,230,255' : '120,220,82'   /* cyan / green */
+      });
+    }
+  }
+  function step() {
+    ctx.clearRect(0, 0, W, H);
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -20) p.x = W + 20; else if (p.x > W + 20) p.x = -20;
+      if (p.y < -20) p.y = H + 20; else if (p.y > H + 20) p.y = -20;
+      /* gentle mouse repulsion */
+      const dx = p.x - mouse.x, dy = p.y - mouse.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < 110 * 110) {
+        const d = Math.sqrt(d2) || 1;
+        const f = (1 - d / 110) * 0.9;
+        p.x += (dx / d) * f; p.y += (dy / d) * f;
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + p.c + ',0.85)';
+      ctx.fill();
+    }
+    /* connect nearby particles */
+    const L2 = LINK_DIST * LINK_DIST;
+    for (let i = 0; i < particles.length; i++) {
+      const a = particles[i];
+      for (let j = i + 1; j < particles.length; j++) {
+        const b = particles[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < L2) {
+          const op = (1 - Math.sqrt(d2) / LINK_DIST) * 0.22;
+          ctx.strokeStyle = 'rgba(34,230,255,' + op + ')';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+    raf = requestAnimationFrame(step);
+  }
+  function start() { if (!raf) raf = requestAnimationFrame(step); }
+  function stop()  { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener('mouseout',   () => { mouse.x = -9999; mouse.y = -9999; });
+  window.addEventListener('resize', init, { passive: true });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop(); else if (!reduced) start();
+  });
+
+  init();
+  if (!reduced) start();
+})();
+</script>
+</body>
+</html>

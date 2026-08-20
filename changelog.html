@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZHP2D · 资源导航</title>
+<title>ZHP2D · 更新日志</title>
 <style>
+
   :root {
     --bg: #0a0e14;
     --bg-card: rgba(255,255,255,.04);
@@ -99,75 +100,75 @@
     pointer-events: none;
   }
   .header, .grid, .footer { position: relative; z-index: 1; }
+
+  .back { color: var(--text-dim); font-size: 13px; letter-spacing: .05em; }
+  .back a { color: var(--cyan); text-decoration: none; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 2px 0 26px; position: relative; z-index: 1; }
+  .toc a { color: var(--text-dim); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 12px; text-decoration: none; transition: color .2s, border-color .2s; }
+  .toc a:hover { color: var(--cyan); border-color: var(--cyan); }
+  .wrap { width: 100%; max-width: 760px; position: relative; z-index: 1; }
+  .version { background: rgba(18,24,33,.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; margin-bottom: 18px; }
+  .vhead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .vtag { font-size: 15px; font-weight: 600; color: var(--cyan); letter-spacing: .02em; }
+  .vdate { font-size: 12px; color: var(--text-fade); }
+  .sec { margin-bottom: 12px; }
+  .sec h2 { font-size: 14px; font-weight: 600; margin-bottom: 8px; letter-spacing: .03em; }
+  .sec.feature h2 { color: var(--green); }
+  .sec.change h2 { color: var(--violet); }
+  .sec.fix h2 { color: var(--cyan); }
+  .sec h3 { font-size: 12px; color: var(--text-dim); margin: 10px 0 6px; letter-spacing: .08em; }
+  .sec ul { list-style: none; }
+  .sec li { font-size: 13px; line-height: 1.7; color: var(--text); padding-left: 18px; position: relative; }
+  .sec li::before { content: '▸'; position: absolute; left: 0; color: var(--text-fade); }
 </style>
 </head>
 <body>
 <canvas id="particles"></canvas>
   <div class="header">
-    <div class="badge">ZHP2D MULTI LINK</div>
-    <h1>ZHP2D <span class="accent">·</span> 资源导航</h1>
-    <div class="sub">ZHP2D 相关文档与工具入口聚合</div>
+    <div class="badge">ZHP2D CHANGELOG</div>
+    <h1>固件 <span class="accent">更新日志</span></h1>
+    <div class="sub back"><a href="index.html">← 返回资源导航</a></div>
   </div>
-  <div class="grid" id="grid"></div>
-  <div class="footer">ZHP2D · <a href="https://github.com" target="_blank" rel="noopener">Multi Link Hub</a></div>
+  <div class="toc" id="toc"></div>
+  <div class="wrap" id="log"></div>
+  <div class="footer">ZHP2D · Multi Link Hub</div>
 
+<script src="changelog.js"></script>
 <script>
-/* 聚合链接表 —— 新增项在此追加即可,无需改其它代码。
- * 字段: name(必填) / url(必填) / desc(可选) / icon(可选: book|link|doc|tool) / internal(可选: 站内页面) */
-const LINKS = [
-  {
-    name: '操作说明',
-    desc: '飞书 Wiki · 设备操作与使用说明文档',
-    url:  'https://wcn8smzkwzo6.feishu.cn/wiki/QZeaw1Y9fitEvtkvxyEcgdxlnId',
-    icon: 'book'
-  },
-  {
-    name: '更新日志',
-    desc: '固件版本功能改动与修复记录',
-    url:  'changelog.html',
-    icon: 'doc',
-    internal: true
-  },
-  {
-    name: 'WebApp 控制台',
-    desc: 'GitHub Pages · BLE 设备连接与实时控制台',
-    url:  'https://zzhku.github.io/ZHP2D_WebApp/',
-    icon: 'tool'
-  }
-];
+/* 更新日志渲染: 版本倒序卡片 + 三分类区块 (feature/change/fix) + 锚点导航 */
+(function () {
+  const EM = { feature: '✨ ', change: '🔧 ', fix: '🐛 ' };
+  const log = document.getElementById('log');
+  const toc = document.getElementById('toc');
 
-const ICONS = {
-  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
-  doc:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>',
-  tool: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 1 5.4-5.4l-2.6 2.6-2-2z"/></svg>',
-  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
-};
-const EXT_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>';
+  CHANGELOG.forEach((v, vi) => {
+    const card = document.createElement('section');
+    card.className = 'version';
+    card.id = 'v' + vi;
+    let html = '<div class="vhead"><span class="vtag">' + v.version + '</span>'
+             + '<span class="vdate">' + v.date + '</span></div>';
+    (v.sections || []).forEach(s => {
+      html += '<div class="sec ' + s.type + '"><h2>' + (EM[s.type] || '') + s.title + '</h2>';
+      if (s.groups) {
+        s.groups.forEach(g => {
+          html += '<h3>' + g.name + '</h3><ul>'
+                + g.items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+        });
+      } else if (s.items) {
+        html += '<ul>' + s.items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+      }
+      html += '</div>';
+    });
+    card.innerHTML = html;
+    log.appendChild(card);
 
-const grid = document.getElementById('grid');
-if (!LINKS.length) {
-  grid.innerHTML = '<div class="empty">暂无链接</div>';
-} else {
-  LINKS.forEach(l => {
     const a = document.createElement('a');
-    a.className = 'card';
-    a.href = l.url;
-    if (!l.internal) {
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-    }
-    a.innerHTML =
-      '<div class="icon">' + (ICONS[l.icon] || ICONS.link) + '</div>' +
-      '<div class="body">' +
-        '<div class="name">' + l.name + '</div>' +
-        (l.desc ? '<div class="desc">' + l.desc + '</div>' : '') +
-      '</div>' +
-      '<div class="ext">' + EXT_ICON + '</div>';
-    grid.appendChild(a);
+    a.href = '#v' + vi;
+    a.textContent = v.version;
+    toc.appendChild(a);
   });
-}
+})();
 </script>
-
 <script>
 /* 粒子背景 —— 星座网络效果:粒子缓慢漂移,近邻连线,鼠标轻排斥。
  * 自适应屏幕尺寸,尊重 prefers-reduced-motion,标签页隐藏时暂停。 */

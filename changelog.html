@@ -106,6 +106,10 @@
   .toc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 2px 0 26px; position: relative; z-index: 1; }
   .toc a { color: var(--text-dim); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 12px; text-decoration: none; transition: color .2s, border-color .2s; }
   .toc a:hover { color: var(--cyan); border-color: var(--cyan); }
+  .tabs { display: flex; gap: 8px; justify-content: center; margin: 0 0 18px; position: relative; z-index: 1; }
+  .tabs .tab { color: var(--text-dim); border: 1px solid var(--border); border-radius: 20px; padding: 5px 18px; font-size: 13px; background: transparent; cursor: pointer; letter-spacing: .03em; transition: color .2s, border-color .2s, background .2s; }
+  .tabs .tab:hover { color: var(--cyan); border-color: var(--cyan); }
+  .tabs .tab.on { color: #031019; background: var(--cyan); border-color: var(--cyan); font-weight: 600; }
   .wrap { width: 100%; max-width: 760px; position: relative; z-index: 1; }
   .version { background: rgba(18,24,33,.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; margin-bottom: 18px; }
   .vhead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -126,47 +130,75 @@
 <canvas id="particles"></canvas>
   <div class="header">
     <div class="badge">ZHP2D CHANGELOG</div>
-    <h1>固件 <span class="accent">更新日志</span></h1>
+    <h1><span class="accent">更新日志</span></h1>
+    <div class="sub" id="sub">固件版本功能改动与修复记录</div>
     <div class="sub back"><a href="index.html">← 返回资源导航</a></div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-src="CHANGELOG">固件</button>
+    <button class="tab" data-src="CHANGELOG_WEB">Web 控制台</button>
   </div>
   <div class="toc" id="toc"></div>
   <div class="wrap" id="log"></div>
   <div class="footer">ZHP2D · Multi Link Hub</div>
 
 <script src="changelog.js"></script>
+<script src="changelog-web.js"></script>
 <script>
-/* 更新日志渲染: 版本倒序卡片 + 三分类区块 (feature/change/fix) + 锚点导航 */
+/* 更新日志渲染: 双频道(固件/Web控制台) tab 切换 + 版本倒序卡片 + 三分类区块 + 锚点导航 */
 (function () {
   const EM = { feature: '✨ ', change: '🔧 ', fix: '🐛 ' };
   const log = document.getElementById('log');
   const toc = document.getElementById('toc');
+  const sub = document.getElementById('sub');
+  const CHANNELS = {
+    CHANGELOG:     { sub: '固件版本功能改动与修复记录' },
+    CHANGELOG_WEB: { sub: 'Web 控制台功能改动与修复记录' },
+  };
 
-  CHANGELOG.forEach((v, vi) => {
-    const card = document.createElement('section');
-    card.className = 'version';
-    card.id = 'v' + vi;
-    let html = '<div class="vhead"><span class="vtag">' + v.version + '</span>'
-             + '<span class="vdate">' + v.date + '</span></div>';
-    (v.sections || []).forEach(s => {
-      html += '<div class="sec ' + s.type + '"><h2>' + (EM[s.type] || '') + s.title + '</h2>';
-      if (s.groups) {
-        s.groups.forEach(g => {
-          html += '<h3>' + g.name + '</h3><ul>'
-                + g.items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
-        });
-      } else if (s.items) {
-        html += '<ul>' + s.items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
-      }
-      html += '</div>';
+  function render(data) {
+    log.innerHTML = '';
+    toc.innerHTML = '';
+    data.forEach((v, vi) => {
+      const card = document.createElement('section');
+      card.className = 'version';
+      card.id = 'v' + vi;
+      let html = '<div class="vhead"><span class="vtag">' + v.version + '</span>'
+               + '<span class="vdate">' + v.date + '</span></div>';
+      (v.sections || []).forEach(s => {
+        html += '<div class="sec ' + s.type + '"><h2>' + (EM[s.type] || '') + s.title + '</h2>';
+        if (s.groups) {
+          s.groups.forEach(g => {
+            html += '<h3>' + g.name + '</h3><ul>'
+                  + g.items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+          });
+        } else if (s.items) {
+          html += '<ul>' + s.items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+        }
+        html += '</div>';
+      });
+      card.innerHTML = html;
+      log.appendChild(card);
+
+      const a = document.createElement('a');
+      a.href = '#v' + vi;
+      a.textContent = v.version;
+      toc.appendChild(a);
     });
-    card.innerHTML = html;
-    log.appendChild(card);
+  }
 
-    const a = document.createElement('a');
-    a.href = '#v' + vi;
-    a.textContent = v.version;
-    toc.appendChild(a);
+  const SOURCES = { CHANGELOG: CHANGELOG, CHANGELOG_WEB: CHANGELOG_WEB };
+
+  document.querySelectorAll('#tabs .tab').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#tabs .tab').forEach(b => b.classList.toggle('on', b === btn));
+      const ch = CHANNELS[btn.dataset.src];
+      if (sub && ch) sub.textContent = ch.sub;
+      render(SOURCES[btn.dataset.src] || []);
+    };
   });
+
+  render(CHANGELOG);
 })();
 </script>
 <script>

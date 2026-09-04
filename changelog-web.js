@@ -15,7 +15,7 @@
 const CHANGELOG_WEB = [
   {
     version: '未发布测试版',
-    date: '2026-09-03',
+    date: '2026-09-04',
     hash: 'c59a0570087cb718043793ce6d2d0eba8d4d8e6c',
     sections: [
       { type: 'feature', title: '新增功能', items: [

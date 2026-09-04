@@ -11,7 +11,7 @@
 const CHANGELOG = [
   {
     version: '未发布测试版',
-    date: '2026-09-03',
+    date: '2026-09-04',
     sections: [
       {
         type: 'feature',
